@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Aptiv Charging Station Status</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --danger-color: #f44336;
+            --card-bg: #2d2d2d;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 1.1em;
+            border-radius: var(--border-radius);
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status-form {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .action-group {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .radio-group-large {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .radio-option-large {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background-color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        .radio-option-large:hover {
+            background-color: #3d3d3d;
+        }
+
+        .radio-option-large.selected {
+            background-color: var(--secondary-color) !important;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .radio-label-large {
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .station-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .station-id-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 10px 0;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-table th,
+        .status-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #3d3d3d;
+        }
+
+        .status-table th {
+            background-color: #333;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.8em;
+        }
+
+        .free {
+            background-color: var(--primary-color);
+        }
+
+        .occupied {
+            background-color: var(--danger-color);
+        }
+
+        .mobile-scroll {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 10px;
+            z-index: 1000;
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .settings-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .hidden-fields {
+            display: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            background-color: #333;
+            color: var(--text-color);
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            background-color: #333;
+            color: var(--text-color);
+            box-sizing: border-box;
+            margin: 10px 0;
+        }
+
+        button[type="submit"] {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 1.1em;
+            transition: opacity 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .radio-group-large {
+                flex-direction: column;
+            }
+
+            .radio-option-large {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .status-table {
+                font-size: 0.9em;
+            }
+
+            .status-table th,
+            .status-table td {
+                padding: 8px 10px;
+            }
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #3d3d3d;
+            z-index: 100;
+        }
+
+        .home-link {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.5em;
+            transition: transform 0.2s;
+        }
+
+        .home-link:hover {
+            transform: scale(1.1);
+        }
+
+        .copyright {
+            font-size: 0.8em;
+            color: #666;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .version {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        /* Add padding to container to prevent content hiding behind footer */
+        .container {
+            padding-bottom: 70px;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('update')">Update Status</button>
+            <button class="tab-button" onclick="switchTab('stations')">All Stations</button>
+        </div>
+
+        <!-- Update Status Tab -->
+        <div id="updateTab" class="tab-content active">
+            <div class="status-form">
+                <form method="POST">
+                    <div class="station-info">
+                        {% if station_id %}
+                        <div class="station-id-display">{{ station_id }}</div>
+                        <input type="hidden" name="station_id" value="{{ station_id }}">
+                        {% else %}
+                        <label for="station_id">Select Station</label>
+                        <select name="station_id" id="station_id" required>
+                            {% for station in charging_stations %}
+                            <option value="{{ station.station_id }}">{{ station.station_id }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+
+                    <div class="action-group">
+                        <div class="radio-group-large">
+                            <label class="radio-option-large" onclick="selectAction('occupy')">
+                                <input type="radio" name="action" value="occupy" required hidden>
+                                <span class="radio-label-large">🚗 Occupy</span>
+                            </label>
+                            <label class="radio-option-large" onclick="selectAction('free')">
+                                <input type="radio" name="action" value="free" hidden>
+                                <span class="radio-label-large">🆓 Free</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="user-fields">
+                        <div class="form-group {% if nickname %}hidden-fields{% endif %}">
+                            <label for="nickname">Nickname</label>
+                            <input type="text" name="nickname" id="nickname" value="{{ nickname }}" required>
+                        </div>
+                        <div class="form-group {% if license_plate %}hidden-fields{% endif %}">
+                            <label for="license_plate">License Plate</label>
+                            <input type="text" name="license_plate" id="license_plate" value="{{ license_plate }}">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-button">Confirm Status Update</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- All Stations Tab -->
+        <div id="stationsTab" class="tab-content">
+            <div class="mobile-scroll">
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>Station ID</th>
+                            <th>Status</th>
+                            <th>Occupied By</th>
+                            <th>License Plate</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for station in charging_stations %}
+                        <tr>
+                            <td>{{ station.station_id }}</td>
+                            <td>
+                                <span class="status-badge {{ 'occupied' if station.status == 'Occupied' else 'free' }}">
+                                    {{ station.status }}
+                                </span>
+                            </td>
+                            <td>{{ station.occupied_by if station.occupied_by else '-' }}</td>
+                            <td>{{ station.license_plate if station.license_plate else '-' }}</td>
+                            <td>
+                                {% if station.timestamp %}
+                                {{ station.timestamp.strftime('%d.%m.%Y %H:%M %Z') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <span class="close-btn" onclick="toggleSettings()">&times;</span>
+            <h2>🔧 User Settings</h2>
+            <form action="/update-user-info" method="POST">
+                <div class="form-group">
+                    <label for="settingsNickname">Nickname</label>
+                    <input type="text" id="settingsNickname" name="nickname" value="{{ nickname }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="settingsLicense">License Plate</label>
+                    <input type="text" id="settingsLicense" name="license_plate" value="{{ license_plate }}">
+                </div>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            const url = new URL(window.location);
+            url.searchParams.set('active_tab', tabName);
+            window.history.replaceState({}, '', url);
+
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function selectAction(action) {
+            document.querySelectorAll('.radio-option-large').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            document.querySelector(`input[value="${action}"]`).checked = true;
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('active_tab');
+
+            if (activeTab === 'stations') {
+                document.querySelector('[onclick="switchTab(\'stations\')"]').click();
+            }
+        });
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target === modal) {
+                modal.classList.remove('active');
+            }
+        }
+    </script>
+
+    <!-- Add footer -->
+    <div class="footer">
+        <a href="/" class="home-link">🏠</a>
+        <div class="copyright">© 2025</div>
+        <div class="version">v0.2</div>
+    </div>
+</body>
+
+</html>
